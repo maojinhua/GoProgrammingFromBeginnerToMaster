@@ -45,7 +45,7 @@ func main() {
 	done := spawnGroup(5, worker, 30)
 	println("spawn a group of workers")
 
-	timer := time.NewTimer(time.Second * 5)
+	timer := time.NewTimer(5 * time.Second)
 	defer timer.Stop()
 	select {
 	case <-timer.C:
@@ -53,4 +53,12 @@ func main() {
 	case <-done:
 		println("group workers done")
 	}
+	// timer := time.NewTimer(time.Second * 5)
+	// defer timer.Stop()
+	// select {
+	// case <-timer.C:
+	// 	println("wait group workers exit timeout!")
+	// case <-done:
+	// 	println("group workers done")
+	// }
 }

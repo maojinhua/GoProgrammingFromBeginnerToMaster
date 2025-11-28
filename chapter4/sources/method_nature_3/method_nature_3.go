@@ -24,5 +24,5 @@ func main() {
 		go v.print()
 	}
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 }

@@ -1,5 +1,6 @@
 package main
 
+//  机场例子 并行方案
 import "time"
 
 const (
@@ -38,6 +39,7 @@ func airportSecurityCheck(id int) int {
 	return total
 }
 
+// 返回接收通道，用于接收各个 goroutine 的耗时数据
 func start(id int, f func(int) int, queue <-chan struct{}) <-chan int {
 	c := make(chan int)
 	go func() {
@@ -45,6 +47,7 @@ func start(id int, f func(int) int, queue <-chan struct{}) <-chan int {
 		for {
 			_, ok := <-queue
 			if !ok {
+				// 通道关闭返回耗时数据
 				c <- total
 				return
 			}
@@ -67,15 +70,17 @@ func max(args ...int) int {
 func main() {
 	total := 0
 	passengers := 30
-	c := make(chan struct{})
-	c1 := start(1, airportSecurityCheck, c)
-	c2 := start(2, airportSecurityCheck, c)
-	c3 := start(3, airportSecurityCheck, c)
+	queue := make(chan struct{})
+	c1 := start(1, airportSecurityCheck, queue)
+	c2 := start(2, airportSecurityCheck, queue)
+	c3 := start(3, airportSecurityCheck, queue)
 
 	for i := 0; i < passengers; i++ {
-		c <- struct{}{}
+		// 向通道发送信号
+		queue <- struct{}{}
 	}
-	close(c)
+	// 关闭通道，各个 goroutine 接收到结束信号
+	close(queue)
 
 	total = max(<-c1, <-c2, <-c3)
 	println("total time cost:", total)

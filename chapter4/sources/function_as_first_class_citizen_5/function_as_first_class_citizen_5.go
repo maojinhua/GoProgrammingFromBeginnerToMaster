@@ -5,9 +5,11 @@ import (
 	"fmt"
 )
 
+
 type IntSliceFunctor interface {
 	Fmap(fn func(int) int) IntSliceFunctor
 }
+
 
 type intSliceFunctorImpl struct {
 	ints []int

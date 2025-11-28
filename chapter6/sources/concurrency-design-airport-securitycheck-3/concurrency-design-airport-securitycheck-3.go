@@ -1,6 +1,10 @@
 package main
 
-import "time"
+// 机场例子并发方案
+import (
+	"sync"
+	"time"
+)
 
 const (
 	idCheckTmCost   = 60
@@ -50,8 +54,10 @@ func start(id string, f func(string) int, next chan<- struct{}) (chan<- struct{}
 	return queue, quit, result
 }
 
-func newAirportSecurityCheckChannel(id string, queue <-chan struct{}) {
+func newAirportSecurityCheckChannel(id string, queue <-chan struct{}, wg *sync.WaitGroup) {
+	wg.Add(1)
 	go func(id string) {
+		defer wg.Done()
 		print("goroutine-", id, ": airportSecurityCheckChannel is ready...\n")
 		// start xRayCheck routine
 		queue3, quit3, result3 := start(id, xRayCheck, nil)
@@ -63,19 +69,21 @@ func newAirportSecurityCheckChannel(id string, queue <-chan struct{}) {
 		queue1, quit1, result1 := start(id, idCheck, queue2)
 
 		for {
-			select {
-			case v, ok := <-queue:
-				if !ok {
-					close(quit1)
-					close(quit2)
-					close(quit3)
-					total := max(<-result1, <-result2, <-result3)
-					print("goroutine-", id, ": airportSecurityCheckChannel time cost:", total, "\n")
-					print("goroutine-", id, ": airportSecurityCheckChannel closed\n")
-					return
-				}
-				queue1 <- v
+			// select {
+			// case v, ok := <-queue:
+			v, ok := <-queue
+			if !ok {
+				// 通道关闭结束 for 循环
+				close(quit1)
+				close(quit2)
+				close(quit3)
+				total := max(<-result1, <-result2, <-result3)
+				print("goroutine-", id, ": airportSecurityCheckChannel time cost:", total, "\n")
+				print("goroutine-", id, ": airportSecurityCheckChannel closed\n")
+				return
 			}
+			queue1 <- v
+			// }
 		}
 	}(id)
 }
@@ -93,15 +101,20 @@ func max(args ...int) int {
 func main() {
 	passengers := 30
 	queue := make(chan struct{}, 30)
-	newAirportSecurityCheckChannel("channel1", queue)
-	newAirportSecurityCheckChannel("channel2", queue)
-	newAirportSecurityCheckChannel("channel3", queue)
+	wg := sync.WaitGroup{}
+
+	newAirportSecurityCheckChannel("channel1", queue, &wg)
+	newAirportSecurityCheckChannel("channel2", queue, &wg)
+	newAirportSecurityCheckChannel("channel3", queue, &wg)
 
 	time.Sleep(5 * time.Second) // 保证上述三个goroutine都已经处于ready状态
 	for i := 0; i < passengers; i++ {
 		queue <- struct{}{}
 	}
+	// 确保所有的goroutine都已执行结束
 	time.Sleep(5 * time.Second)
-	close(queue) // 为了打印各通道的处理时长
-	time.Sleep(1000 * time.Second)
+	close(queue)
+	
+	wg.Wait()
+
 }

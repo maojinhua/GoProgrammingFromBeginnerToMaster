@@ -27,6 +27,7 @@ func spawnGroup(n int, f func(int)) chan struct{} {
 					return
 				}
 				// do the job
+				fmt.Println(name,"worker ",j)
 				worker(j)
 			}
 		}(i)

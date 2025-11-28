@@ -8,7 +8,7 @@ import (
 
 func writeToFile(fname string, data []byte, mu *sync.Mutex) error {
 	mu.Lock()
-	f, err := os.OpenFile(fname, os.O_RDWR, 0666)
+	f, err := os.OpenFile(fname, os.O_CREATE, 0666)
 	if err != nil {
 		mu.Unlock()
 		return err
@@ -47,7 +47,7 @@ func writeToFile(fname string, data []byte, mu *sync.Mutex) error {
 
 func main() {
 	var mu sync.Mutex
-	err := writeToFile("./foo.txt", []byte("hello, defer!\n"), &mu)
+	err := writeToFile("foo.txt", []byte("hello, defer!\n"), &mu)
 	if err != nil {
 		fmt.Println("writeToFile error:", err)
 		return

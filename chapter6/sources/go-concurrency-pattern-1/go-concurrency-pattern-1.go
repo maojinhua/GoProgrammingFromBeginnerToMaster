@@ -2,6 +2,7 @@ package main
 
 import "time"
 
+
 func worker(args ...interface{}) {
 	if len(args) == 0 {
 		return
@@ -14,7 +15,8 @@ func worker(args ...interface{}) {
 	time.Sleep(time.Second * (time.Duration(interval)))
 }
 
-func spawn(f func(args ...interface{}), args ...interface{}) chan struct{} {
+// spawn 返回 chan 给主线程当退出信号
+func spawn(f func(args ...interface{}), args ...interface{}) <-chan struct{} {
 	c := make(chan struct{})
 	go func() {
 		f(args...)

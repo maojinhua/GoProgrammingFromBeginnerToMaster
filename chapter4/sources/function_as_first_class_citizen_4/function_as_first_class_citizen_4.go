@@ -7,6 +7,7 @@ func times(x, y int) int {
 }
 
 func partialTimes(x int) func(int) int {
+	// 返回一个闭包
 	return func(y int) int {
 		return times(x, y)
 	}
